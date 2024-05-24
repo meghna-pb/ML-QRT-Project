@@ -43,7 +43,7 @@ class DataPreparer:
         Saves the prepared data to parquet and optionally to an Excel file.
     """
 
-    def __init__(self, path, mode="train", save_to_excel=True, colstonotconsider=None):
+    def __init__(self, path, train=True, save_to_excel=True, colstonotconsider=None):
         """
         Constructs all the necessary attributes for the DataPreparer object.
 
@@ -60,7 +60,7 @@ class DataPreparer:
         """
         if colstonotconsider is None:
             colstonotconsider = ['TEAM_NAME', 'LEAGUE', 'PLAYER_NAME', 'POSITION']
-        self.mode = mode
+        self.train = train
         self.path = path
         self.save_to_excel = save_to_excel
         self.colstonotconsider = colstonotconsider
@@ -76,7 +76,7 @@ class DataPreparer:
         """
         Loads the data from CSV files depending on the mode attribute.
         """
-        if self.mode == "train":
+        if self.train:
             data_home_team_path = self.path + "Train_Data/train_home_team_statistics_df.csv"
             data_home_players_path = self.path + "Train_Data/train_home_player_statistics_df.csv"
             data_away_team_path = self.path + "Train_Data/train_away_team_statistics_df.csv"
@@ -88,6 +88,8 @@ class DataPreparer:
             data_home_players_path = self.path + "Test_Data/test_home_player_statistics_df.csv"
             data_away_team_path = self.path + "Test_Data/test_away_team_statistics_df.csv"
             data_away_players_path = self.path + "Test_Data/test_away_player_statistics_df.csv"
+            data_match_path = self.path + "y_test.csv"
+            self.data_match = pd.read_csv(data_match_path)
 
         self.data_home_team = pd.read_csv(data_home_team_path)
         self.data_home_players = pd.read_csv(data_home_players_path)
@@ -161,9 +163,9 @@ class DataPreparer:
         """
         self.remove_columns()
 
-        if self.mode == "train":
-            self.data_match['results'] = self.data_match.apply(lambda x: 0 if x['HOME_WINS'] > 0 else 1 if x['DRAW'] else 2, axis=1)
-            self.data_match = self.data_match.drop(['HOME_WINS', 'DRAW', 'AWAY_WINS'], axis=1)
+        # if self.mode == "train":
+        self.data_match['results'] = self.data_match.apply(lambda x: 0 if x['HOME_WINS'] > 0 else 1 if x['DRAW'] else 2, axis=1)
+        self.data_match = self.data_match.drop(['HOME_WINS', 'DRAW', 'AWAY_WINS'], axis=1)
 
         self.data_home_team = self.rename_columns(self.data_home_team, prefix='HOME_')
         self.data_away_team = self.rename_columns(self.data_away_team, prefix='AWAY_')
@@ -173,10 +175,10 @@ class DataPreparer:
         data_home_players_prepared = self.prepare_player_data(self.data_home_players, 'HOME_PLAYERS_')
         data_away_players_prepared = self.prepare_player_data(self.data_away_players, 'AWAY_PLAYERS_')
 
-        if self.mode == "train":
-            self.data = pd.merge(self.data_match, self.data_home_team, on='ID', how='left')
-        else:
-            self.data = self.data_home_team
+        # if self.mode == "train":
+        self.data = pd.merge(self.data_match, self.data_home_team, on='ID', how='left')
+        # else:
+        #     self.data = self.data_home_team
 
         self.data = pd.merge(self.data, self.data_away_team, on='ID', how='left')
         self.data = pd.merge(self.data, data_home_players_prepared, on='ID', how='left')
@@ -186,12 +188,13 @@ class DataPreparer:
         """
         Saves the prepared data to parquet and optionally to an Excel file.
         """
-        output_prefix = "train" if self.mode == "train" else "test"
-        print(f"Saving the prepared data to data/prepared_data_{output_prefix}.parquet and data/prepared_data_{output_prefix}.xlsx")
+        output_prefix = "train" if self.train else "test"
         self.data.to_parquet(f"data/prepared_data_{output_prefix}.parquet")
+        print(f"Saving the prepared data to data/prepared_data_{output_prefix}.parquet")
 
         if self.save_to_excel:
             self.data.to_excel(f"data/prepared_data_{output_prefix}.xlsx")
+            print(f"Saving the prepared data to data/prepared_data_{output_prefix}.xlsx")
 
         print('Data prepared and saved!')
 

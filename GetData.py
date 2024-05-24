@@ -102,6 +102,7 @@ class DataScaler:
         # Remove rows with missing values
         n = len(self.data)
         self.data = self.data.dropna(how="any")
+        self.data = self.data.dropna(axis=1)
         print(f"Removed {round(100 * (1 - len(self.data) / n), 2)}% of rows because they have missing values")
 
         # Scale every column in the feature_columns list
@@ -116,14 +117,5 @@ class DataScaler:
         tuple
             A tuple containing the processed DataFrame, the list of feature columns, and the target column name.
         """
-        if self.train:
-            self.prepare_data()
-            return self.data, self.feature_columns, self.target_column
-        else:
-            self.prepare_data()
-            train_data = self.data.copy()
-            self.data = pd.read_parquet("data/prepared_data_test.parquet")
-
-            # Scale every column in the feature_columns list
-            self.data = self.scale_data(self.data, self.feature_columns, train_data)
-            return self.data, self.feature_columns, self.target_column
+        self.prepare_data()
+        return self.data, self.feature_columns, self.target_column
