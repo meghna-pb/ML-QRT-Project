@@ -88,8 +88,6 @@ class DataPreparer:
             data_home_players_path = self.path + "Test_Data/test_home_player_statistics_df.csv"
             data_away_team_path = self.path + "Test_Data/test_away_team_statistics_df.csv"
             data_away_players_path = self.path + "Test_Data/test_away_player_statistics_df.csv"
-            data_match_path = self.path + "y_test.csv"
-            self.data_match = pd.read_csv(data_match_path)
 
         self.data_home_team = pd.read_csv(data_home_team_path)
         self.data_home_players = pd.read_csv(data_home_players_path)
@@ -163,9 +161,9 @@ class DataPreparer:
         """
         self.remove_columns()
 
-        # if self.mode == "train":
-        self.data_match['results'] = self.data_match.apply(lambda x: 0 if x['HOME_WINS'] > 0 else 1 if x['DRAW'] else 2, axis=1)
-        self.data_match = self.data_match.drop(['HOME_WINS', 'DRAW', 'AWAY_WINS'], axis=1)
+        if self.mode == "train":
+            self.data_match['results'] = self.data_match.apply(lambda x: 0 if x['HOME_WINS'] > 0 else 1 if x['DRAW'] else 2, axis=1)
+            self.data_match = self.data_match.drop(['HOME_WINS', 'DRAW', 'AWAY_WINS'], axis=1)
 
         self.data_home_team = self.rename_columns(self.data_home_team, prefix='HOME_')
         self.data_away_team = self.rename_columns(self.data_away_team, prefix='AWAY_')
@@ -175,10 +173,10 @@ class DataPreparer:
         data_home_players_prepared = self.prepare_player_data(self.data_home_players, 'HOME_PLAYERS_')
         data_away_players_prepared = self.prepare_player_data(self.data_away_players, 'AWAY_PLAYERS_')
 
-        # if self.mode == "train":
-        self.data = pd.merge(self.data_match, self.data_home_team, on='ID', how='left')
-        # else:
-        #     self.data = self.data_home_team
+        if self.mode == "train":
+            self.data = pd.merge(self.data_match, self.data_home_team, on='ID', how='left')
+        else:
+            self.data = self.data_home_team
 
         self.data = pd.merge(self.data, self.data_away_team, on='ID', how='left')
         self.data = pd.merge(self.data, data_home_players_prepared, on='ID', how='left')

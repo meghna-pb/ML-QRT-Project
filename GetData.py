@@ -96,14 +96,13 @@ class DataScaler:
         print(f"Removed {round(100 * len(columns_to_drop) / len(self.data.columns), 2)}% of columns because they have only one value")
         self.data = self.data.drop(columns=columns_to_drop)
 
-        # Update feature_columns
-        self.feature_columns = [col for col in self.feature_columns if col in self.data.columns]
-
         # Remove rows with missing values
         n = len(self.data)
-        self.data = self.data.dropna(how="any")
-        self.data = self.data.dropna(axis=1)
+        self.data = self.data.dropna(how="any").dropna(axis=1)
         print(f"Removed {round(100 * (1 - len(self.data) / n), 2)}% of rows because they have missing values")
+
+        # Update feature_columns
+        self.feature_columns = [col for col in self.feature_columns if col in self.data.columns]
 
         # Scale every column in the feature_columns list
         self.data = self.scale_data(self.data, self.feature_columns, self.data)
